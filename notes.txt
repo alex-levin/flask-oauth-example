@@ -1,0 +1,8 @@
+https://blog.miguelgrinberg.com/post/oauth-authentication-with-flask
+
+https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/
+
+Client ID
+445c5f216b7e3fe64bbd
+Client Secret
+106016f8ada84a1097d2299c4c29c4ac72031758

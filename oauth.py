@@ -2,6 +2,9 @@ import json
 
 from rauth import OAuth1Service, OAuth2Service
 from flask import current_app, url_for, request, redirect, session
+import requests
+
+# https://rauth.readthedocs.io/en/latest/api/
 
 
 class OAuthSignIn(object):
@@ -107,3 +110,79 @@ class TwitterSignIn(OAuthSignIn):
         social_id = 'twitter$' + str(me.get('id'))
         username = me.get('screen_name')
         return social_id, username, None   # Twitter does not provide email
+
+
+class GitHubSignIn(OAuthSignIn):
+    def __init__(self):
+        super(GitHubSignIn, self).__init__('github')
+        self.service = OAuth2Service(
+            name='github',
+            client_id=self.consumer_id,
+            client_secret=self.consumer_secret,
+            # https://developer.github.com/apps/building-oauth-apps/authorizing-oauth-apps/
+            authorize_url='https://github.com/login/oauth/authorize',
+            access_token_url='https://github.com/login/oauth/access_token',
+            base_url='https://api.github.com/'
+        )
+
+    def authorize(self):
+        return redirect(self.service.get_authorize_url(
+            scope='user',
+            response_type='code',
+            redirect_uri=self.get_callback_url())
+        )
+
+    def callback(self):
+        def decode_json(payload):
+            return json.loads(payload.decode('utf-8'))
+
+        if 'code' not in request.args:
+            return None, None, None
+
+        # Retrieve an access token
+        # https://rauth.readthedocs.io/en/latest/api/
+        # oauth_session = self.service.get_auth_session(
+        oauth_session = self.service.get_raw_access_token(
+            data={'code': request.args['code'],
+                  'grant_type': 'authorization_code',
+                  'redirect_uri': self.get_callback_url()}
+        )
+        # access_token=66ed1b082d2a46fff54ee917319489f151abbaa2&scope=user&token_type=bearer
+        print(oauth_session.text)
+        token = oauth_session.text.split('&')[0].split('=')[1]
+        # 66ed1b082d2a46fff54ee917319489f151abbaa2
+        print(token)
+        # curl -s "https://api.github.com/users/alex-levin" -H "Authorization: token:66ed1b082d2a46fff54ee917319489f151abbaa2"
+        r = requests.get('https://api.github.com/users/alex-levin', headers={'Authorization': f'token:$token'})
+        '''
+        b'{"login":"alex-levin","id":1595599,"node_id":"MDQ6VXNlcjE1OTU1OTk=",
+        "avatar_url":"https://avatars2.githubusercontent.com/u/1595599?v=4",
+        "gravatar_id":"","url":"https://api.github.com/users/alex-levin",
+        "html_url":"https://github.com/alex-levin","followers_url":"https://api.github.com/users/alex-levin/followers",
+        "following_url":"https://api.github.com/users/alex-levin/following{/other_user}",
+        "gists_url":"https://api.github.com/users/alex-levin/gists{/gist_id}",
+        "starred_url":"https://api.github.com/users/alex-levin/starred{/owner}{/repo}",
+        "subscriptions_url":"https://api.github.com/users/alex-levin/subscriptions",
+        "organizations_url":"https://api.github.com/users/alex-levin/orgs",
+        "repos_url":"https://api.github.com/users/alex-levin/repos",
+        "events_url":"https://api.github.com/users/alex-levin/events{/privacy}",
+        "received_events_url":"https://api.github.com/users/alex-levin/received_events",
+        "type":"User","site_admin":false,"name":"Alex Levin","company":null,"blog":"",
+        "location":"Natick, MA","email":null,"hireable":null,"bio":null,"public_repos":202,
+        "public_gists":24,"followers":0,"following":1,"created_at":"2012-04-01T14:30:11Z",
+        "updated_at":"2020-04-21T11:13:02Z"}'
+        '''
+        print(r.content)
+        # print('>>> I am here2')
+        # me = oauth_session.get('me?fields=id,email').json()
+        # # {'message': 'Not Found', 'documentation_url': 'https://developer.github.com/v3'}
+        # print('MMM', me)
+
+        # This returns tuple: id, email
+        # return (
+        #     'github$' + me['id'],
+        #     me.get('email').split('@')[0],  # Facebook does not provide
+        #                                     # username, so the email's user
+        #                                     # is used instead
+        #     me.get('email')
+        # )
