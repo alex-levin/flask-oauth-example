@@ -18,8 +18,8 @@ app.config['OAUTH_CREDENTIALS'] = {
         'secret': 'm9TEd58DSEtRrZHpz2EjrV9AhsBRxKMo8m3kuIZj3zLwzwIimt'
     },
     'github': {
-        'id': '445c5f216b7e3fe64bbd',
-        'secret': '106016f8ada84a1097d2299c4c29c4ac72031758'
+        'id': '445...',
+        'secret': '106...'
     }    
 }
 
