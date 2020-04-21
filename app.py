@@ -8,6 +8,7 @@ from oauth import OAuthSignIn
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'top secret!'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['OAUTH_CREDENTIALS'] = {
     'facebook': {
         'id': '470154729788964',
@@ -18,8 +19,8 @@ app.config['OAUTH_CREDENTIALS'] = {
         'secret': 'm9TEd58DSEtRrZHpz2EjrV9AhsBRxKMo8m3kuIZj3zLwzwIimt'
     },
     'github': {
-        'id': '445...',
-        'secret': '106...'
+        'id': 'fixme',
+        'secret': 'fixme'
     }    
 }
 
@@ -31,9 +32,9 @@ lm.login_view = 'index'
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
-    social_id = db.Column(db.String(64), nullable=False, unique=True)
-    nickname = db.Column(db.String(64), nullable=False)
-    email = db.Column(db.String(64), nullable=True)
+    login = db.Column(db.String(64), nullable=False, unique=True)
+    name = db.Column(db.String(64), nullable=False)
+    repos_url = db.Column(db.String(255), nullable=True)
 
 
 @lm.user_loader
@@ -65,16 +66,18 @@ def oauth_callback(provider):
     if not current_user.is_anonymous:
         return redirect(url_for('index'))
     oauth = OAuthSignIn.get_provider(provider)
-    social_id, username, email = oauth.callback()
-    if social_id is None:
+    id, login, name, repos_url = oauth.callback()
+    if id is None:
+        # see get_flashed_messages() in index.html
         flash('Authentication failed.')
         return redirect(url_for('index'))
-    user = User.query.filter_by(social_id=social_id).first()
+    user = User.query.filter_by(id=id).first()
     if not user:
-        user = User(social_id=social_id, nickname=username, email=email)
+        user = User(id=id, login=login, name=name, repos_url=repos_url)
         db.session.add(user)
         db.session.commit()
     login_user(user, True)
+    # redirecting to index.html template
     return redirect(url_for('index'))
 
 

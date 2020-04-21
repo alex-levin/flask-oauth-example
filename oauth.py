@@ -6,7 +6,6 @@ import requests
 
 # https://rauth.readthedocs.io/en/latest/api/
 
-
 class OAuthSignIn(object):
     providers = None
 
@@ -111,7 +110,7 @@ class TwitterSignIn(OAuthSignIn):
         username = me.get('screen_name')
         return social_id, username, None   # Twitter does not provide email
 
-
+# Added Github login
 class GitHubSignIn(OAuthSignIn):
     def __init__(self):
         super(GitHubSignIn, self).__init__('github')
@@ -153,36 +152,9 @@ class GitHubSignIn(OAuthSignIn):
         # 66ed1b082d2a46fff54ee917319489f151abbaa2
         print(token)
         # curl -s "https://api.github.com/users/alex-levin" -H "Authorization: token:66ed1b082d2a46fff54ee917319489f151abbaa2"
-        r = requests.get('https://api.github.com/users/alex-levin', headers={'Authorization': f'token:$token'})
-        '''
-        b'{"login":"alex-levin","id":1595599,"node_id":"MDQ6VXNlcjE1OTU1OTk=",
-        "avatar_url":"https://avatars2.githubusercontent.com/u/1595599?v=4",
-        "gravatar_id":"","url":"https://api.github.com/users/alex-levin",
-        "html_url":"https://github.com/alex-levin","followers_url":"https://api.github.com/users/alex-levin/followers",
-        "following_url":"https://api.github.com/users/alex-levin/following{/other_user}",
-        "gists_url":"https://api.github.com/users/alex-levin/gists{/gist_id}",
-        "starred_url":"https://api.github.com/users/alex-levin/starred{/owner}{/repo}",
-        "subscriptions_url":"https://api.github.com/users/alex-levin/subscriptions",
-        "organizations_url":"https://api.github.com/users/alex-levin/orgs",
-        "repos_url":"https://api.github.com/users/alex-levin/repos",
-        "events_url":"https://api.github.com/users/alex-levin/events{/privacy}",
-        "received_events_url":"https://api.github.com/users/alex-levin/received_events",
-        "type":"User","site_admin":false,"name":"Alex Levin","company":null,"blog":"",
-        "location":"Natick, MA","email":null,"hireable":null,"bio":null,"public_repos":202,
-        "public_gists":24,"followers":0,"following":1,"created_at":"2012-04-01T14:30:11Z",
-        "updated_at":"2020-04-21T11:13:02Z"}'
-        '''
-        print(r.content)
-        # print('>>> I am here2')
-        # me = oauth_session.get('me?fields=id,email').json()
-        # # {'message': 'Not Found', 'documentation_url': 'https://developer.github.com/v3'}
-        # print('MMM', me)
-
-        # This returns tuple: id, email
-        # return (
-        #     'github$' + me['id'],
-        #     me.get('email').split('@')[0],  # Facebook does not provide
-        #                                     # username, so the email's user
-        #                                     # is used instead
-        #     me.get('email')
-        # )
+        r = requests.get('https://api.github.com/users/alex-levin', headers={'Authorization': f'token:$token'}).json()
+        
+        # returning the id, login, name, repos_url dictionary
+        # return {'id': r['id'], 'login': r['login'], 'name': r['name'], 'repos_url': r['repos_url']}
+        return r['id'], r['login'], r['name'], r['repos_url']
+        
